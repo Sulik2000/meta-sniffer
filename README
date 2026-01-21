@@ -1,0 +1,7 @@
+This README file contains information on the contents of the meta-sniffer layer.
+
+Please see the corresponding sections below for details.
+
+This layer automatically deploys binaries in /usr/bin/ and deploys sniffer.service in /etc/systemd/system.
+
+sniffer_cli is CLI for sniffer, you enter commands like: 'sniffer_cli start'
