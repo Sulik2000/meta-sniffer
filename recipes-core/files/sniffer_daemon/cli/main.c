@@ -31,17 +31,17 @@ int main(int argc, char *argv[])
         show_help();
         return 0;
     }
-    
+
     if (strcmp(argv[1], "start") == 0)
     {
-        system("systemctl start sniffer.service");
+        system("service sniffer start");
         printf("Sniffer daemon started successfully.\n");
         return 0;
     }
-    
-    if(strcmp(argv[1], "stop") == 0)
+
+    if (strcmp(argv[1], "stop") == 0)
     {
-        system("systemctl stop sniffer.service");
+        system("service sniffer stop");
         printf("Sniffer daemon stopped successfully.\n");
         return 0;
     }
@@ -65,7 +65,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-
     if (strcmp(argv[1], "select") == 0)
     {
         if (strcmp(argv[2], "iface") == 0 && argc == 4)
@@ -76,7 +75,6 @@ int main(int argc, char *argv[])
             strcat(cmd, argv[3]);
             // Send command to daemon
             send(socket_fd, cmd, strlen(cmd), 0);
-            printf("Interface selected successfully.\n");
             return 0;
         }
         else
@@ -123,34 +121,39 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if(strcmp(argv[argc - 3], "show") == 0)
+    if (strcmp(argv[argc - 3], "show") == 0)
     {
         char cmd[40] = "";
         char buffer[100];
         char ip[20] = "";
-        strncpy(ip, argv[argc - 2], sizeof(ip)-1);
-        if(strcmp(argv[argc-1], "count") != 0){
+        strncpy(ip, argv[argc - 2], sizeof(ip) - 1);
+        if (strcmp(argv[argc - 1], "count") != 0)
+        {
             printf("Invalid arguments for show command.\n");
             return 1;
         }
         strcat(cmd, "show:");
         strcat(cmd, ip);
         send(socket_fd, cmd, strlen(cmd), 0);
-        int bytes = recv(socket_fd, buffer, sizeof(buffer)-1, 0);
-        if(bytes < 0){
-            perror("Receive from daemon failed");
-            close(socket_fd);
-            return 1;
+        while (1)
+        {
+            int bytes = recv(socket_fd, buffer, sizeof(buffer) - 1, 0);
+            if (bytes < 0)
+            {
+                perror("Receive from daemon failed");
+                close(socket_fd);
+                return 1;
+            }
+            if (bytes == 0)
+            {
+                printf("All statistics claimed\n");
+                close(socket_fd);
+                break;
+            }
+            buffer[bytes] = '\0';
+            printf("%s", buffer);
         }
-        if(bytes == 0){
-            printf("No data received from daemon.\n");
-            close(socket_fd);
-            return 0;
-        }
-        buffer[bytes] = '\0';
-        printf("%s", buffer);
         return 0;
     }
     printf("Unknown command. Use --help to see available options.\n");
-    
 }
